@@ -335,6 +335,172 @@ num_wr_reqs_to_start_packing_show(struct device *dev,
 
 	ret = snprintf(buf, PAGE_SIZE, "%d\n", num_wr_reqs_to_start_packing);
 
+	mmc_blk_put(md);
+	return ret;
+}
+
+static ssize_t
+num_wr_reqs_to_start_packing_store(struct device *dev,
+				 struct device_attribute *attr,
+				 const char *buf, size_t count)
+{
+	int value;
+	struct mmc_blk_data *md = mmc_blk_get(dev_to_disk(dev));
+	struct mmc_card *card;
+	int ret = count;
+
+	if (!md)
+		return -EINVAL;
+
+	card = md->queue.card;
+	if (!card) {
+		ret = -EINVAL;
+		goto exit;
+	}
+
+	sscanf(buf, "%d", &value);
+
+	if (value >= 0) {
+		md->queue.num_wr_reqs_to_start_packing =
+		    min_t(int, value, (int)card->ext_csd.max_packed_writes);
+
+		pr_debug("%s: trigger to pack: new value = %d",
+			mmc_hostname(card->host),
+			md->queue.num_wr_reqs_to_start_packing);
+	} else {
+		pr_err("%s: value %d is not valid. old value remains = %d",
+			mmc_hostname(card->host), value,
+			md->queue.num_wr_reqs_to_start_packing);
+		ret = -EINVAL;
+	}
+
+exit:
+	mmc_blk_put(md);
+	return ret;
+}
+
+static ssize_t
+bkops_check_threshold_show(struct device *dev,
+				  struct device_attribute *attr, char *buf)
+{
+	struct mmc_blk_data *md = mmc_blk_get(dev_to_disk(dev));
+	struct mmc_card *card;
+	int ret;
+
+	if (!md)
+		return -EINVAL;
+
+	card = md->queue.card;
+	if (!card)
+		ret = -EINVAL;
+	else
+	    ret = snprintf(buf, PAGE_SIZE, "%d\n",
+		card->bkops_info.size_percentage_to_queue_delayed_work);
+
+	mmc_blk_put(md);
+	return ret;
+}
+
+static ssize_t
+bkops_check_threshold_store(struct device *dev,
+				 struct device_attribute *attr,
+				 const char *buf, size_t count)
+{
+	int value;
+	struct mmc_blk_data *md = mmc_blk_get(dev_to_disk(dev));
+	struct mmc_card *card;
+	unsigned int card_size;
+	int ret = count;
+
+	if (!md)
+		return -EINVAL;
+
+	card = md->queue.card;
+	if (!card) {
+		ret = -EINVAL;
+		goto exit;
+	}
+
+	sscanf(buf, "%d", &value);
+	if ((value <= 0) || (value >= 100)) {
+		ret = -EINVAL;
+		goto exit;
+	}
+
+	card_size = (unsigned int)get_capacity(md->disk);
+	if (card_size <= 0) {
+		ret = -EINVAL;
+		goto exit;
+	}
+	card->bkops_info.size_percentage_to_queue_delayed_work = value;
+	card->bkops_info.min_sectors_to_queue_delayed_work =
+		(card_size * value) / 100;
+
+	pr_debug("%s: size_percentage = %d, min_sectors = %d",
+			mmc_hostname(card->host),
+			card->bkops_info.size_percentage_to_queue_delayed_work,
+			card->bkops_info.min_sectors_to_queue_delayed_work);
+
+exit:
+	mmc_blk_put(md);
+	return count;
+}
+
+static ssize_t
+no_pack_for_random_show(struct device *dev,
+				  struct device_attribute *attr, char *buf)
+{
+	struct mmc_blk_data *md = mmc_blk_get(dev_to_disk(dev));
+	int ret;
+
+	if (!md)
+		return -EINVAL;
+	ret = snprintf(buf, PAGE_SIZE, "%d\n", md->queue.no_pack_for_random);
+
+	mmc_blk_put(md);
+	return ret;
+}
+
+static ssize_t
+no_pack_for_random_store(struct device *dev,
+				 struct device_attribute *attr,
+				 const char *buf, size_t count)
+{
+	int value;
+	struct mmc_blk_data *md = mmc_blk_get(dev_to_disk(dev));
+	struct mmc_card *card;
+	int ret = count;
+
+	if (!md)
+		return -EINVAL;
+
+	card = md->queue.card;
+	if (!card) {
+		ret = -EINVAL;
+		goto exit;
+	}
+
+	sscanf(buf, "%d", &value);
+
+	if (value < 0) {
+		pr_err("%s: value %d is not valid. old value remains = %d",
+			mmc_hostname(card->host), value,
+			md->queue.no_pack_for_random);
+		ret = -EINVAL;
+		goto exit;
+	}
+
+	md->queue.no_pack_for_random = (value > 0) ?  true : false;
+
+	pr_debug("%s: no_pack_for_random: new value = %d",
+		mmc_hostname(card->host),
+		md->queue.no_pack_for_random);
+
+exit:
+	mmc_blk_put(md);
+	return ret;
+}
+
 #ifdef CONFIG_MMC_SIMULATE_MAX_SPEED
 
 static int max_read_speed, max_write_speed, cache_size = 4;
@@ -405,64 +571,6 @@ static ssize_t max_write_speed_show(struct device *dev,
 	return ret;
 }
 
-static ssize_t
-num_wr_reqs_to_start_packing_store(struct device *dev,
-				 struct device_attribute *attr,
-				 const char *buf, size_t count)
-{
-	int value;
-	struct mmc_blk_data *md = mmc_blk_get(dev_to_disk(dev));
-	struct mmc_card *card;
-	int ret = count;
-
-	if (!md)
-		return -EINVAL;
-
-	card = md->queue.card;
-	if (!card) {
-		ret = -EINVAL;
-		goto exit;
-	}
-
-	sscanf(buf, "%d", &value);
-
-	if (value >= 0) {
-		md->queue.num_wr_reqs_to_start_packing =
-		    min_t(int, value, (int)card->ext_csd.max_packed_writes);
-
-		pr_debug("%s: trigger to pack: new value = %d",
-			mmc_hostname(card->host),
-			md->queue.num_wr_reqs_to_start_packing);
-	} else {
-		pr_err("%s: value %d is not valid. old value remains = %d",
-			mmc_hostname(card->host), value,
-			md->queue.num_wr_reqs_to_start_packing);
-		ret = -EINVAL;
-	}
-
-exit:
-	mmc_blk_put(md);
-	return ret;
-}
-
-static ssize_t
-bkops_check_threshold_show(struct device *dev,
-				  struct device_attribute *attr, char *buf)
-{
-	struct mmc_blk_data *md = mmc_blk_get(dev_to_disk(dev));
-	struct mmc_card *card;
-	int ret;
-
-	if (!md)
-		return -EINVAL;
-
-	card = md->queue.card;
-	if (!card)
-		ret = -EINVAL;
-	else
-	    ret = snprintf(buf, PAGE_SIZE, "%d\n",
-		card->bkops_info.size_percentage_to_queue_delayed_work);
-
 static ssize_t max_write_speed_store(struct device *dev,
 				  struct device_attribute *attr,
 				  const char *buf, size_t count)
@@ -493,48 +601,6 @@ static ssize_t max_read_speed_show(struct device *dev,
 	return ret;
 }
 
-static ssize_t
-bkops_check_threshold_store(struct device *dev,
-				 struct device_attribute *attr,
-				 const char *buf, size_t count)
-{
-	int value;
-	struct mmc_blk_data *md = mmc_blk_get(dev_to_disk(dev));
-	struct mmc_card *card;
-	unsigned int card_size;
-	int ret = count;
-
-	if (!md)
-		return -EINVAL;
-
-	card = md->queue.card;
-	if (!card) {
-		ret = -EINVAL;
-		goto exit;
-	}
-
-	sscanf(buf, "%d", &value);
-	if ((value <= 0) || (value >= 100)) {
-		ret = -EINVAL;
-		goto exit;
-	}
-
-	card_size = (unsigned int)get_capacity(md->disk);
-	if (card_size <= 0) {
-		ret = -EINVAL;
-		goto exit;
-	}
-	card->bkops_info.size_percentage_to_queue_delayed_work = value;
-	card->bkops_info.min_sectors_to_queue_delayed_work =
-		(card_size * value) / 100;
-
-	pr_debug("%s: size_percentage = %d, min_sectors = %d",
-			mmc_hostname(card->host),
-			card->bkops_info.size_percentage_to_queue_delayed_work,
-			card->bkops_info.min_sectors_to_queue_delayed_work);
-
-exit:
-
 static ssize_t max_read_speed_store(struct device *dev,
 				  struct device_attribute *attr,
 				  const char *buf, size_t count)
@@ -551,17 +617,6 @@ static ssize_t max_read_speed_store(struct device *dev,
 	mmc_blk_put(md);
 	return count;
 }
-
-static ssize_t
-no_pack_for_random_show(struct device *dev,
-				  struct device_attribute *attr, char *buf)
-{
-	struct mmc_blk_data *md = mmc_blk_get(dev_to_disk(dev));
-	int ret;
-
-	if (!md)
-		return -EINVAL;
-	ret = snprintf(buf, PAGE_SIZE, "%d\n", md->queue.no_pack_for_random);
 
 static const DEVICE_ATTR(max_read_speed, S_IRUGO | S_IWUSR,
 	max_read_speed_show, max_read_speed_store);
@@ -597,46 +652,6 @@ static ssize_t cache_size_show(struct device *dev,
 		}
 	}
 
-	mmc_blk_put(md);
-	return ret;
-}
-
-static ssize_t
-no_pack_for_random_store(struct device *dev,
-				 struct device_attribute *attr,
-				 const char *buf, size_t count)
-{
-	int value;
-	struct mmc_blk_data *md = mmc_blk_get(dev_to_disk(dev));
-	struct mmc_card *card;
-	int ret = count;
-
-	if (!md)
-		return -EINVAL;
-
-	card = md->queue.card;
-	if (!card) {
-		ret = -EINVAL;
-		goto exit;
-	}
-
-	sscanf(buf, "%d", &value);
-
-	if (value < 0) {
-		pr_err("%s: value %d is not valid. old value remains = %d",
-			mmc_hostname(card->host), value,
-			md->queue.no_pack_for_random);
-		ret = -EINVAL;
-		goto exit;
-	}
-
-	md->queue.no_pack_for_random = (value > 0) ?  true : false;
-
-	pr_debug("%s: no_pack_for_random: new value = %d",
-		mmc_hostname(card->host),
-		md->queue.no_pack_for_random);
-
-exit:
 	mmc_blk_put(md);
 	return ret;
 }
@@ -1739,7 +1754,6 @@ static int mmc_blk_issue_flush(struct mmc_queue *mq, struct request *req)
 				req->rq_disk->disk_name, __func__);
 		ret = -EIO;
 	}
-
 #ifdef CONFIG_MMC_SIMULATE_MAX_SPEED
 	else if (atomic_read(&mq->cache_size)) {
 		long used = mmc_blk_cache_used(mq, jiffies);
@@ -3361,7 +3375,6 @@ static void mmc_blk_remove_req(struct mmc_blk_data *md)
 			device_remove_file(disk_to_dev(md->disk),
 						&dev_attr_cache_size);
 #endif
-
 			/* Stop new requests from getting into the queue */
 			del_gendisk(md->disk);
 		}
@@ -3420,7 +3433,6 @@ static int mmc_add_disk(struct mmc_blk_data *md)
 	if (ret)
 		goto cache_size_fail;
 #endif
-
 	if ((md->area_type & MMC_BLK_DATA_AREA_BOOT) &&
 	     card->ext_csd.boot_ro_lockable) {
 		umode_t mode;
