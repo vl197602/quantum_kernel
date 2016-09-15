@@ -14,7 +14,7 @@ typedef enum
 	MODE_INVALID=0,
 	MODE_NORMAL,
 	MODE_HANDWRITE,
-	MODE_GLOVE,
+	//MODE_GLOVE,
 	MODE_WINDOW,
 	MODE_MAX,
 }touch_mode_type;
