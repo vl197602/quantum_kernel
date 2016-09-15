@@ -580,9 +580,9 @@ static ssize_t  touchscreen_mode_show(struct device *dev,struct device_attribute
 			mode = "handwrite";
                         break;
 
-                case MODE_GLOVE:
+                /*case MODE_GLOVE:
 			mode = "glove";
-                        break;
+                        break;*/
 
                 case MODE_WINDOW:
 			mode = "window";
@@ -633,8 +633,8 @@ static ssize_t  touchscreen_mode_store(struct device *dev,struct device_attribut
 		mode=MODE_NORMAL;
 	else if(strncmp(buf, "handwrite",count-1)==0)
 		mode=MODE_HANDWRITE;
-	else if(strncmp(buf, "glove",count-1)==0)
-		mode=MODE_GLOVE;
+	/*else if(strncmp(buf, "glove",count-1)==0)
+		mode=MODE_GLOVE;*/
 	else if(strncmp(buf, "window",count-1)==0)
 		mode=MODE_WINDOW;
 	else

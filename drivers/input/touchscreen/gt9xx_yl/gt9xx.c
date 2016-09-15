@@ -88,8 +88,8 @@ struct tw_platform_data *gtpdata=NULL;
 #endif
 static unsigned int GTP_PWR_EN=1;
 #define GTP_SLEEP_PWR_EN 0
-u8 glove_mode=0;
-u8 glove_switch=0;
+//u8 glove_mode=0;
+//u8 glove_switch=0;
 atomic_t gt_keypad_enable;
 
 #ifdef CONFIG_TOUCHSCREEN_GT9XX_YL_COVER_WINDOW_SIZE
@@ -1272,7 +1272,7 @@ Input:
 Output:
 	Executive outcomes.0---succeed.
 *******************************************************/
-static s32 gtp_write_config(struct goodix_ts_data *ts)
+/*static s32 gtp_write_config(struct goodix_ts_data *ts)
 {
     s32 ret = -1;
     s32 i;
@@ -1345,7 +1345,7 @@ static s32 gtp_write_config(struct goodix_ts_data *ts)
     msleep(10);
 
     return 0;
-}
+}*/
 
 
 /*******************************************************
@@ -1760,24 +1760,24 @@ int goodix_reset_touchscreen(void)
 
 //added by taokai
 u8 gt9158_has_resumed = 0;
-#if  TW_GLOVE_SWITCH
+//#if  TW_GLOVE_SWITCH
 
 u32 yl_get_charger_status(void);
 
 void yl_chg_status_changed(void)
 {
 	u32 chg_status;
-	int count = 0;
-	u8 write_val;
-	s32 ret = -1;
-	u8 i2c_control_buf[3] = {(u8)(GTP_REG_SLEEP >> 8), (u8)GTP_REG_SLEEP, 0x0a};
-	u8 i2c_command_buf[3] = {0x80,0x46};
+	//int count = 0;
+	//u8 write_val;
+	//s32 ret = -1;
+	//u8 i2c_control_buf[3] = {(u8)(GTP_REG_SLEEP >> 8), (u8)GTP_REG_SLEEP, 0x0a};
+	//u8 i2c_command_buf[3] = {0x80,0x46};
 
 	chg_status = yl_get_charger_status();
 	pr_err("tw get charger status is: %d\n", chg_status);
 	//GTP_DEBUG("[GTP]:%s glove mode  charge status has change, chg_status = %d.\n", __func__, chg_status);
 
-	if (glove_switch == MODE_GLOVE)
+	/*if (glove_switch == MODE_GLOVE)
 	{
 		if(gt9158_has_resumed == 1)
 		{
@@ -1815,10 +1815,10 @@ void yl_chg_status_changed(void)
 			}
 			}
 		}
-	}
+	}*/
 }
 EXPORT_SYMBOL(yl_chg_status_changed);
-touch_mode_type goodix_get_mode(void)
+/*touch_mode_type goodix_get_mode(void)
 {
 	return glove_switch;//sprintf(buf, "%d",glove_switch);
 }
@@ -1911,10 +1911,10 @@ int goodix_set_mode(touch_mode_type work_mode)
 	GTP_DEBUG("enter %s\n",__FUNCTION__);
     return 1;
 }
-#endif
+#endif*/
 
 /* begin to add interface function for TW_GLOVE_SWITCH by liushilong@yulong.com on 2014-11-6 17:15*/
-#ifdef CONFIG_TOUCHSCREEN_GT9XX_YL_TW_GLOVE_SWITCHy
+/*#ifdef CONFIG_TOUCHSCREEN_GT9XX_YL_TW_GLOVE_SWITCHy
 void window_mode(bool on)
 {
 	if(on){
@@ -1939,14 +1939,14 @@ int glove_windows_switch(int in_hall)
 void window_mode(bool on)
 {
     GTP_DEBUG("Not support window mode.\n");
-}
+}*/
 
 int glove_windows_switch(int in_hall)
 {
     GTP_DEBUG("Not support window switch.\n");
 	return 0;
 }
-#endif
+//#endif
 EXPORT_SYMBOL_GPL(glove_windows_switch);
 /* end to add interface function for TW_GLOVE_SWITCH by liushilong@yulong.com on 2014-11-6 17:15*/
 
@@ -2221,8 +2221,8 @@ touchscreen_ops_tpye goodix_ops=
 	.calibrate					= goodix_calibrate,
 	.get_firmware_version		= goodix_get_firmware_version,
 	.reset_touchscreen			= goodix_reset_touchscreen,
-	.get_mode					= goodix_get_mode,
-	.set_mode					= goodix_set_mode,
+	//.get_mode					= goodix_get_mode,
+	//.set_mode					= goodix_set_mode,
 	.get_oreitation				= goodix_get_oreitation,
 	.set_oreitation				= goodix_set_oreitation,
 	.read_regs					= goodix_read_regs,
@@ -2649,7 +2649,7 @@ static int goodix_ts_parse_dt(struct device *dev, struct tw_platform_data *pdata
 #endif
 /******************glove switch **************************/
 
-static ssize_t glove_show(struct device *dev,struct device_attribute *attr, char *buf)
+/*static ssize_t glove_show(struct device *dev,struct device_attribute *attr, char *buf)
 {
 	u8 ret = 0;
 	u8 i2c_control_buf[3] = {(u8)(GTP_REG_SLEEP >> 8), (u8)GTP_REG_SLEEP};
@@ -2803,7 +2803,7 @@ static ssize_t glove_store(struct device *dev,struct device_attribute *attr,cons
 }
 	return count;
 
-}
+}*/
 
 /*********************test_gesture_slide_support***add mxg*********/
  static ssize_t gesture_support_show(struct device *dev,
@@ -2969,7 +2969,7 @@ static ssize_t keypad_enable_store(struct device *dev,
 static DEVICE_ATTR(gesture_support, S_IRUGO|S_IWUSR, gesture_support_show, NULL);
 static DEVICE_ATTR(send_cfg_ver,S_IRUGO|S_IWUSR, gt968_send_cfg_ver_show, gt968_send_cfg_ver_store);
 
-static DEVICE_ATTR(glove_switch, S_IRUGO|S_IWUSR, glove_show, glove_store);
+//static DEVICE_ATTR(glove_switch, S_IRUGO|S_IWUSR, glove_show, glove_store);
 
 #ifdef CONFIG_TOUCHSCREEN_GT9XX_YL_COVER_WINDOW_SIZE
 static DEVICE_ATTR(windows_switch, S_IRUGO|S_IWUSR, windows_show, windows_store);
@@ -2978,7 +2978,7 @@ static DEVICE_ATTR(windows_switch, S_IRUGO|S_IWUSR, windows_show, windows_store)
 static DEVICE_ATTR(keypad_enable, S_IRUGO|S_IWUSR, keypad_enable_show, keypad_enable_store);
 
 static struct attribute *goodix_attributes[] = {
-	&dev_attr_glove_switch.attr,
+	//&dev_attr_glove_switch.attr,
 #ifdef CONFIG_TOUCHSCREEN_GT9XX_YL_COVER_WINDOW_SIZE
 	&dev_attr_windows_switch.attr,
 #endif
@@ -3206,10 +3206,10 @@ gt9xx_cover_window.win_y_max = 300;
     touchscreen_set_ops(&goodix_ops);
 
    gt9158_has_resumed = 1;
-#if  TW_GLOVE_SWITCH
+/*#if  TW_GLOVE_SWITCH
 
     yl_chg_status_changed();
-#endif
+#endif*/
 
 /* begin to remove these function, these should be work on initialize period, del 5 line,liushilong@yulong.com on 2014-11-6 17:40*/
 //#if GTP_ESD_PROTECT
@@ -3421,11 +3421,11 @@ static int goodix_ts_enable(struct input_dev *in_dev)
         GTP_ERROR("GTP later resume failed.");
     }
 
-#if  TW_GLOVE_SWITCH
+/*#if  TW_GLOVE_SWITCH
     if (glove_switch == MODE_GLOVE) {
     	yl_chg_status_changed();
     	}
-#endif
+#endif*/
 
     if (ts->use_irq)
     {
