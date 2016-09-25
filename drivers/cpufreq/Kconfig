@@ -132,6 +132,7 @@ config CPU_FREQ_DEFAULT_GOV_DARKNESS
 config CPU_FREQ_DEFAULT_GOV_IMPULSE
 	bool "impulse"
 	select CPU_FREQ_GOV_IMPULSE
+	default y
 	help
 	  Use the CPUFreq governor 'impulse' as default. This allows
 	  you to get a full dynamic cpu frequency capable system by simply
