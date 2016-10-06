@@ -310,7 +310,7 @@ int proc_fd_permission(struct inode *inode, int mask)
 		return rv;
 
 	rcu_read_lock();
-	p = pid_task(proc_pid(inode), PIDTYPE_PID);
+	p = tgid_task(proc_pid(inode), PIDTYPE_PID);
 	if (p && same_thread_group(p, current))
 		rv = 0;
 	rcu_read_unlock();
