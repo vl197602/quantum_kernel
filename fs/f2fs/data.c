@@ -873,6 +873,30 @@ next:
 				phys, size, flags);
 	}
 
+static int get_data_block_ro_bmap(struct inode *inode, sector_t iblock,
+			struct buffer_head *bh_result, int create)
+{
+	/* Block number less than F2FS MAX BLOCKS */
+	if (unlikely(iblock >= max_file_size(0)))
+		return -EFBIG;
+	return get_data_block_ro(inode, iblock, bh_result, create, false);
+}
+
+/*
+ * This function should be used by the data read flow only where it
+ * does not check the "create" flag that indicates block allocation.
+ * The reason for this special functionality is to exploit VFS readahead
+ * mechanism.
+ */
+static int get_data_block_ro(struct inode *inode, sector_t iblock,
+			struct buffer_head *bh_result, int create)
+{
+	unsigned int blkbits = inode->i_sb->s_blocksize_bits;
+	unsigned maxblocks = bh_result->b_size >> blkbits;
+	struct dnode_of_data dn;
+	pgoff_t pgofs;
+	int err;
+
 	if (start_blk > last_blk || ret)
 		goto out;
 
