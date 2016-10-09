@@ -141,7 +141,7 @@ static void add_to_ptable(unsigned int *arg)
 		node->ptr->len = node->len;
 }
 
-static int split_ptable_args(char *line, unsigned int *arg, uint32_t n)
+static int split_ptable_args(char *line, uint64_t *arg, uint32_t n)
 {
 	char *args;
 	int i;
